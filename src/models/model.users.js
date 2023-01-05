@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema(
       ref: "users",
       required: false,
     },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: false,
+    },
   },
   { timestamps: true }
 );

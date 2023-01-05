@@ -7,10 +7,22 @@ const roleSchema = new mongoose.Schema(
     menuId: [
       { type: mongoose.Schema.Types.ObjectId, ref: "menus", required: true },
     ],
-    createdBy: { type: String, required: false },
-    updatedBy: { type: String, required: false },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: true,
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: false,
+    },
     isDeleted: { type: Boolean, required: false },
-    deletedBy: { type: String, required: false },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: false,
+    },
     deletedAt: { type: Date, required: false },
   },
   { timestamps: true }

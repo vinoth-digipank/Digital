@@ -12,7 +12,8 @@ module.exports.createMenu = async function (req) {
     winston.debug("Transaction started");
 
     req.body.createdBy = req.user ? req.user._id : null;
-
+    req.body.updatedBy = null;
+    req.body.deletedBy = null;
     // Validation
     const { error, value } = validateCreateMenu(req.body);
     if (error) {

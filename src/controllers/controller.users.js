@@ -15,7 +15,8 @@ module.exports.createUser = async function (req) {
 
     req.body.password = await hashPassword(req.body.password);
     req.body.createdBy = req.user ? req.user._id : null;
-
+    req.body.updatedBy = null;
+    req.body.deletedBy = null;
     // Validation
     const { error, value } = validateCreateUser(req.body);
     if (error) {

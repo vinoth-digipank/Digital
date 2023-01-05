@@ -1,38 +1,35 @@
 "use strict";
 const winston = require("winston");
 const _ = require("lodash");
-const { Roles } = require("../models/model.roles");
+const { Comments } = require("../models/model.comments");
 const { ActivityLog } = require("../models/model.activityLog");
-const { validateCreateRole } = require("../validations/validation.roles");
+const { validateCreateComment } = require("../validations/validation.comment");
 
 let activityLog = {};
 
-module.exports.createRole = async function (req) {
+module.exports.createComment = async function (req) {
   try {
     winston.debug("Transaction started");
 
-    req.body.createdBy = req.user ? req.user._id : null;
-    req.body.updatedBy = null;
-    req.body.deletedBy = null;
     // Validation
-    const { error, value } = validateCreateRole(req.body);
+    const { error, value } = validateCreateComment(req.body);
     if (error) {
       return { status: false, data: null, message: error, errorCode: 400 };
     }
 
-    // Now registering the roles
-    winston.info(`Registering Roles: ${req.body.emailId}`);
+    // Now registering the comments
+    winston.info(`Registering Comments:`);
 
-    const roles = new Roles(req.body);
+    const comments = new Comments(req.body);
 
-    await roles.save();
+    await comments.save();
 
-    winston.info("Registered Roles successfully");
+    winston.info("Registered Comments successfully");
 
     return {
       status: true,
-      data: roles,
-      message: "Roles created successfully",
+      data: comments,
+      message: "Comments created successfully",
       errorCode: null,
     };
   } catch (error) {
@@ -53,31 +50,31 @@ module.exports.createRole = async function (req) {
   }
 };
 
-module.exports.getRoleByID = async function (id) {
+module.exports.getCommentByID = async function (id) {
   try {
-    winston.info(`Getting information of roles: ${id}`);
+    winston.info(`Getting information of comments: ${id}`);
 
-    const roles = await Roles.findById(id);
-    if (_.isEmpty(roles)) {
-      winston.debug("Invalid Roles");
+    const comments = await Comments.findById(id);
+    if (_.isEmpty(comments)) {
+      winston.debug("Invalid Comments");
       return {
         status: false,
         data: null,
-        message: "Invalid Roles",
+        message: "Invalid Comments",
         errorCode: 200,
       };
     }
 
-    if (roles.isDeleted) {
+    if (comments.isDeleted) {
       return {
         status: false,
         data: null,
-        message: "Roles Already Removed!",
+        message: "Comments Already Removed!",
         errorCode: 200,
       };
     }
 
-    return { status: true, data: roles, message: "", errorCode: null };
+    return { status: true, data: comments, message: "", errorCode: null };
   } catch (error) {
     if (error.name === "CastError") {
       winston.debug("Invalid  ID");
@@ -92,12 +89,12 @@ module.exports.getRoleByID = async function (id) {
   }
 };
 
-module.exports.getAllRole = async function () {
+module.exports.getAllComment = async function () {
   try {
-    winston.info("Getting All Roles");
+    winston.info("Getting All Comments");
 
-    const roles = await Roles.find({ isDeleted: false });
-    if (_.isEmpty(roles)) {
+    const comments = await Comments.find({ isDeleted: false });
+    if (_.isEmpty(comments)) {
       winston.debug();
       return {
         status: false,
@@ -107,18 +104,18 @@ module.exports.getAllRole = async function () {
       };
     }
 
-    return { status: true, data: roles, message: "", errorCode: null };
+    return { status: true, data: comments, message: "", errorCode: null };
   } catch (error) {
     return { status: false, data: null, message: error, errorCode: 400 };
   }
 };
 
-module.exports.updateRole = async function (req) {
+module.exports.updateComment = async function (req) {
   try {
-    winston.info("Update Roles");
+    winston.info("Update Comments");
 
-    const roles = await Roles.findById(req.body._id);
-    if (_.isEmpty(roles)) {
+    const comments = await Comments.findById(req.body._id);
+    if (_.isEmpty(comments)) {
       return {
         status: false,
         data: null,
@@ -127,43 +124,46 @@ module.exports.updateRole = async function (req) {
       };
     }
 
-    if (roles.isDeleted) {
+    if (comments.isDeleted) {
       return {
         status: false,
         data: null,
-        message: "Roles Already removed!",
+        message: "Comments Already removed!",
         errorCode: 200,
       };
     }
 
-    roles.roleName = req.body.roleName;
+    comments.message = req.body.message;
 
-    roles.menuId = req.body.menuId;
+    comments.votes = req.body.votes;
 
-    roles.updatedBy = req.user._id;
-
-    const updatedRoles = await new Roles(roles).save();
-    if (updatedRoles) {
-      activityLog.collectionName = "roles";
+    const updatedComments = await new Comments(comments).save();
+    if (updatedComments) {
+      activityLog.collectionName = "comments";
       activityLog.type = "UPDATE";
-      activityLog.operation = "update_roless";
-      activityLog.doc = updatedRoles;
+      activityLog.operation = "update_commentss";
+      activityLog.doc = updatedComments;
 
       await new ActivityLog(activityLog).save();
     }
 
-    return { status: true, data: updatedRoles, message: "", errorCode: null };
+    return {
+      status: true,
+      data: updatedComments,
+      message: "",
+      errorCode: null,
+    };
   } catch (error) {
     return { status: false, data: null, message: error, errorCode: 400 };
   }
 };
 
-module.exports.deleteRole = async function (id, userReq) {
+module.exports.deleteComment = async function (id) {
   try {
-    winston.info("Update Roles");
+    winston.info("Delete Comments");
 
-    const roles = await Roles.findById(id);
-    if (_.isEmpty(roles)) {
+    const comments = await Comments.findById(id);
+    if (_.isEmpty(comments)) {
       return {
         status: false,
         data: null,
@@ -172,35 +172,39 @@ module.exports.deleteRole = async function (id, userReq) {
       };
     }
 
-    if (roles.isDeleted) {
+    if (comments.isDeleted) {
       return {
         status: false,
         data: null,
-        message: "Roles Already removed!",
+        message: "Comments Already removed!",
         errorCode: 200,
       };
     }
 
-    const deletedRoles = await Roles.findByIdAndUpdate(
-      roles._id,
+    const deletedComments = await Comments.findByIdAndUpdate(
+      comments._id,
       {
         isDeleted: true,
         deletedAt: Date.now(),
-        deletedBy: userReq._id,
       },
       { new: true }
     );
 
-    if (deletedRoles) {
-      activityLog.collectionName = "roles";
+    if (deletedComments) {
+      activityLog.collectionName = "comments";
       activityLog.type = "DELETE";
-      activityLog.operation = "delete_roles";
-      activityLog.doc = deletedRoles;
+      activityLog.operation = "delete_comments";
+      activityLog.doc = deletedComments;
 
       await new ActivityLog(activityLog).save();
     }
 
-    return { status: true, data: deletedRoles, message: "", errorCode: null };
+    return {
+      status: true,
+      data: deletedComments,
+      message: "",
+      errorCode: null,
+    };
   } catch (error) {
     return { status: false, data: null, message: error, errorCode: 400 };
   }
